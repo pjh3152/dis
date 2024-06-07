@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import Swal from "sweetalert2";
 
 const AddProducts = () => {
   let area = null;
@@ -131,7 +132,7 @@ const AddProducts = () => {
     });
 
     if (count > 1) {
-      alert("이동할 항목을 하나만 선택해 주세요!");
+      Swal.fire({title:"이동할 항목을 하나만 선택해 주세요!"});
       return;
     }
 
@@ -171,6 +172,39 @@ const AddProducts = () => {
   const checkItem = (idx) => {
     checkRef.current[idx].checked = !checkRef.current[idx].checked;
   };
+
+  // 삭제
+  const deleteItem = () => {
+
+    let count = 0;
+
+    checkRef.current.forEach((c) => {
+      if (c.checked) count += 1;
+    });
+
+    if (count <= 0) {
+      Swal.fire({title:"삭제할 항목을 선택해 주세요!"});
+      return;
+    }
+
+    Swal.fire({
+      title: "정말 삭제하시겠습니까?",
+      text: "삭제한 데이터는 복구할 수 없습니다!",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes",
+      cancelButtonText: "No",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "Your file has been deleted.",
+          icon: "success"
+        });
+      }
+    });
+  }
 
   return (
     <section className="bg-light">
@@ -242,21 +276,23 @@ const AddProducts = () => {
           )}
         </div>
 
-        {/* 이동버튼 */}
+        {/* 이동, 수정, 삭제버튼 */}
 
         <p className="text-center mb-4">
           <button
-            className="btn btn-primary me-5"
+            className="btn btn-primary me-4"
             onClick={() => moveProduct("forward")}
           >
             Forward
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary me-4"
             onClick={() => moveProduct("backward")}
           >
             Backward
           </button>
+          <button className="btn btn-primary me-4">Edit</button>
+          <button className="btn btn-primary me-4" onClick={deleteItem}>Delete</button>
         </p>
 
         {/* 목록 */}
