@@ -18,6 +18,7 @@ const AddProducts = () => {
 
   const [formView, setFormView] = useState(false);
   const [list, setList] = useState([]);
+  const [saveBtn, setSaveBtn] = useState("저 장");
 
   // 초기화를 위해 input 들을 ref 배열로 관리한다.
   // ref={(el) => (inputRef.current[0] = el)}
@@ -49,8 +50,11 @@ const AddProducts = () => {
 
   // 목록 불러오기
   const getData = async () => {
-
-    checkRef.current.forEach((c) => {if(c) {c.checked = false}});
+    checkRef.current.forEach((c) => {
+      if (c) {
+        c.checked = false;
+      }
+    });
 
     const result = await axios.get("/addProducts", {
       params: { area: location.state.area },
@@ -113,6 +117,20 @@ const AddProducts = () => {
     getData();
   };
 
+  // 비우기
+  const clearBtnClicked = () => {
+    setInput({
+      ...input,
+      title: "",
+      coverFile: [],
+      contentFile: [],
+    });
+
+    // input 들을 초기화한다.
+    inputRef.current.map((ref) => (ref.value = ""));
+    setSaveBtn("저 장");
+  }
+
   const formViewChanged = () => {
     if (formView) {
       setFormView(false);
@@ -132,7 +150,7 @@ const AddProducts = () => {
     });
 
     if (count > 1) {
-      Swal.fire({title:"이동할 항목을 하나만 선택해 주세요!"});
+      Swal.fire({ title: "이동할 항목을 하나만 선택해 주세요!" });
       return;
     }
 
@@ -173,19 +191,49 @@ const AddProducts = () => {
     checkRef.current[idx].checked = !checkRef.current[idx].checked;
   };
 
-  // 삭제
-  const deleteItem = () => {
-
+  // 상세보기
+  const detailItem = async () => {
     let count = 0;
+    let num = 0;
 
     checkRef.current.forEach((c) => {
-      if (c.checked) count += 1;
+      if (c.checked) {
+        count += 1;
+        num = c.value;
+      }
     });
 
-    if (count <= 0) {
-      Swal.fire({title:"삭제할 항목을 선택해 주세요!"});
+    if (count > 1) {
+      Swal.fire({ title: "수정할 항목은 하나만 선택해 주세요!" });
       return;
     }
+
+    if (num <= 0) return;
+
+    const result = await axios.get("/detailProduct", {
+      params: { area: location.state.area, num },
+    });
+
+    if (result) {
+      setInput({...input, title:result.data[0].d_title});
+      setSaveBtn("수 정");
+      setFormView(true);
+    }
+  };
+
+  // 삭제
+  const deleteItem = () => {
+    let count = 0;
+    let selectedItems = [];
+
+    checkRef.current.forEach((c) => {
+      if (c.checked) {
+        count += 1;
+        selectedItems.push(c.value);
+      }
+    });
+
+    if (count <= 0) return;
 
     Swal.fire({
       title: "정말 삭제하시겠습니까?",
@@ -197,14 +245,18 @@ const AddProducts = () => {
       cancelButtonText: "No",
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "Deleted!",
-          text: "Your file has been deleted.",
-          icon: "success"
+        // data 로 보내면 body 로 받을 수 있음 (기본적으로 delete 에는 body 가 없음)
+        axios.delete("/deleteProduct", {
+          data: {
+            area: location.state.area,
+            items: selectedItems,
+          },
         });
+
+        getData();
       }
     });
-  }
+  };
 
   return (
     <section className="bg-light">
@@ -236,6 +288,7 @@ const AddProducts = () => {
                     }}
                     onChange={inputChanged}
                     ref={(el) => (inputRef.current[0] = el)}
+                    value={input.title}
                   />
                   <label htmlFor="title">제목</label>
                 </div>
@@ -266,10 +319,16 @@ const AddProducts = () => {
               </div>
               <div className="col-12 col-xl-7 text-center">
                 <button
-                  className="btn btn-primary mt-4 w-25"
+                  className="btn btn-primary mt-4 w-25 me-4"
                   onClick={saveBtnClicked}
                 >
-                  저 장
+                  {saveBtn}
+                </button>
+                <button
+                  className="btn btn-primary mt-4 w-25"
+                  onClick={clearBtnClicked}
+                >
+                  비우기
                 </button>
               </div>
             </div>
@@ -291,8 +350,12 @@ const AddProducts = () => {
           >
             Backward
           </button>
-          <button className="btn btn-primary me-4">Edit</button>
-          <button className="btn btn-primary me-4" onClick={deleteItem}>Delete</button>
+          <button className="btn btn-primary me-4" onClick={detailItem}>
+            Edit
+          </button>
+          <button className="btn btn-primary me-4" onClick={deleteItem}>
+            Delete
+          </button>
         </p>
 
         {/* 목록 */}

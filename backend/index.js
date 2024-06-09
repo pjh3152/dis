@@ -40,20 +40,30 @@ app.get("/login", async (req, res) => {
   res.send(await query.login(req));
 });
 
-// 사업분야 등록 (관리자)
+// ========== 사업분야 (관리자) ==========
+// 등록
 app.post("/addProducts", async (req, res) => {
-  // console.log("here2");
   res.send(await query.addProducts(req));
 });
 
-// 사업분야 목록 (관리자)
+// 목록
 app.get("/addProducts", async (req, res) => {
   res.send(await query.getProducts(req));
 });
 
-// 사업분야 항목이동 (관리자)
+// 항목이동
 app.post("/moveProduct", async (req, res) => {
   res.send(await query.moveProduct(req));
+});
+
+// 삭제
+app.delete("/deleteProduct", async (req, res) => {
+  res.send(await query.deleteProduct(req));
+});
+
+// 상세보기
+app.get("/detailProduct", async (req, res) => {
+  res.send(await query.detailProduct(req));
 })
 
 app.listen(port, () => {

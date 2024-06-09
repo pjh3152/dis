@@ -1,4 +1,5 @@
 const db = require("./database");
+const fs = require("fs");
 
 const query = {
   // 관리자 로그인
@@ -78,6 +79,47 @@ const query = {
 
       return "success";
     }
+  },
+  // 사업분야 삭제 (관리자)
+  deleteProduct: async (req) => {
+    const d = req.body;
+    let result = null;
+
+    d.items.forEach(async (num) => {
+      result = await db.execute(
+        "SELECT d_cover, d_content FROM t_product WHERE d_area = ? AND d_num = ?",
+        [d.area, num]
+      );
+
+      // 파일삭제
+      if(result) {
+        result.forEach(async (file) => {
+          if(fs.existsSync("./Upload/" + file.d_cover)) {
+            fs.unlinkSync("./Upload/" + file.d_cover);
+            console.log(file.d_cover + "삭제");
+          }
+          if(fs.existsSync("./Upload/" + file.d_content)) {
+            fs.unlinkSync("./Upload/" + file.d_content);
+            console.log(file.d_content + "삭제");
+          }
+        });
+      }
+
+      // 데이터삭제
+      try {
+        await db.execute(
+          "DELETE FROM t_product WHERE d_area = ? AND d_num = ?",
+          [d.area, num]
+        );
+        return "success";
+      } catch {
+        return "failed";
+      }
+    });
+  },
+  // 사업분야 상세보기 (수정을 위해)
+  detailProduct: async (req, res) => {
+    return await db.execute("SELECT * FROM t_product WHERE d_area = ? AND d_num = ?",[req.query.area, req.query.num]);
   },
 };
 
