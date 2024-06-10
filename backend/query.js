@@ -86,21 +86,22 @@ const query = {
     let result = null;
 
     d.items.forEach(async (num) => {
+
+      num = Number(num);
+
       result = await db.execute(
         "SELECT d_cover, d_content FROM t_product WHERE d_area = ? AND d_num = ?",
         [d.area, num]
       );
 
       // 파일삭제
-      if(result) {
+      if (result) {
         result.forEach(async (file) => {
-          if(fs.existsSync("./Upload/" + file.d_cover)) {
+          if (fs.existsSync("./Upload/" + file.d_cover)) {
             fs.unlinkSync("./Upload/" + file.d_cover);
-            console.log(file.d_cover + "삭제");
           }
-          if(fs.existsSync("./Upload/" + file.d_content)) {
+          if (fs.existsSync("./Upload/" + file.d_content)) {
             fs.unlinkSync("./Upload/" + file.d_content);
-            console.log(file.d_content + "삭제");
           }
         });
       }
@@ -111,6 +112,10 @@ const query = {
           "DELETE FROM t_product WHERE d_area = ? AND d_num = ?",
           [d.area, num]
         );
+        await db.execute(
+          "UPDATE t_product SET d_num = d_num - 1 WHERE d_area = ? AND d_num > ?",
+          [d.area, num]
+        );
         return "success";
       } catch {
         return "failed";
@@ -119,7 +124,10 @@ const query = {
   },
   // 사업분야 상세보기 (수정을 위해)
   detailProduct: async (req, res) => {
-    return await db.execute("SELECT * FROM t_product WHERE d_area = ? AND d_num = ?",[req.query.area, req.query.num]);
+    return await db.execute(
+      "SELECT * FROM t_product WHERE d_area = ? AND d_num = ?",
+      [req.query.area, req.query.num]
+    );
   },
 };
 

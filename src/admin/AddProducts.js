@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 
 const AddProducts = () => {
   let area = null;
+  let selNum = 0;
   const location = useLocation();
 
   // 참조 (리액트 여러개의 input 상태관리로 검색)
@@ -104,6 +105,7 @@ const AddProducts = () => {
       console.log(result.data);
     }
 
+    selNum = 0;
     setInput({
       ...input,
       title: "",
@@ -119,6 +121,7 @@ const AddProducts = () => {
 
   // 비우기
   const clearBtnClicked = () => {
+    selNum = 0;
     setInput({
       ...input,
       title: "",
@@ -129,7 +132,7 @@ const AddProducts = () => {
     // input 들을 초기화한다.
     inputRef.current.map((ref) => (ref.value = ""));
     setSaveBtn("저 장");
-  }
+  };
 
   const formViewChanged = () => {
     if (formView) {
@@ -194,12 +197,11 @@ const AddProducts = () => {
   // 상세보기
   const detailItem = async () => {
     let count = 0;
-    let num = 0;
 
     checkRef.current.forEach((c) => {
       if (c.checked) {
         count += 1;
-        num = c.value;
+        selNum = c.value;
       }
     });
 
@@ -208,14 +210,14 @@ const AddProducts = () => {
       return;
     }
 
-    if (num <= 0) return;
+    if (selNum <= 0) return;
 
     const result = await axios.get("/detailProduct", {
-      params: { area: location.state.area, num },
+      params: { area: location.state.area, num: selNum },
     });
 
-    if (result) {
-      setInput({...input, title:result.data[0].d_title});
+    if (result.data.length > 0) {
+      setInput({ ...input, title: result.data[0].d_title });
       setSaveBtn("수 정");
       setFormView(true);
     }
@@ -227,7 +229,7 @@ const AddProducts = () => {
     let selectedItems = [];
 
     checkRef.current.forEach((c) => {
-      if (c.checked) {
+      if (c && c.checked) {
         count += 1;
         selectedItems.push(c.value);
       }
@@ -236,17 +238,17 @@ const AddProducts = () => {
     if (count <= 0) return;
 
     Swal.fire({
-      title: "정말 삭제하시겠습니까?",
+      title: "정말 삭제하시겠습니까?777",
       text: "삭제한 데이터는 복구할 수 없습니다!",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes",
       cancelButtonText: "No",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
         // data 로 보내면 body 로 받을 수 있음 (기본적으로 delete 에는 body 가 없음)
-        axios.delete("/deleteProduct", {
+        await axios.delete("/deleteProduct", {
           data: {
             area: location.state.area,
             items: selectedItems,
