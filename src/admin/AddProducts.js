@@ -6,7 +6,6 @@ import Swal from "sweetalert2";
 
 const AddProducts = () => {
   let area = null;
-  let selNum = 0;
   const location = useLocation();
 
   // 참조 (리액트 여러개의 input 상태관리로 검색)
@@ -19,6 +18,7 @@ const AddProducts = () => {
 
   const [formView, setFormView] = useState(false);
   const [list, setList] = useState([]);
+  const [selNum, setSelNum] = useState(0);
   const [saveBtn, setSaveBtn] = useState("저 장");
 
   // 초기화를 위해 input 들을 ref 배열로 관리한다.
@@ -77,14 +77,20 @@ const AddProducts = () => {
     // 구조분해할당
     const { title, coverFile, contentFile } = input;
 
-    if (!title || coverFile.length <= 0 || contentFile.length <= 0) {
-      return;
+    // 신규등록
+    if (selNum <= 0) {
+      if (!title || coverFile.length <= 0 || contentFile.length <= 0) {
+        return;
+      }
+    } else {
+      if (!title) return;
     }
 
     const form = new FormData();
 
     form.append("area", location.state.area);
     form.append("title", title);
+    form.append("num", selNum); // selNum 이 있을경우 수정으로 처리한다.
 
     // 유사배열을 배열로 변환하기 위해 Array.from 을 사용한 후 form 에 append 한다.
     Array.from(coverFile).forEach((file) => form.append("files", file));
@@ -105,7 +111,7 @@ const AddProducts = () => {
       console.log(result.data);
     }
 
-    selNum = 0;
+    setSelNum(0);
     setInput({
       ...input,
       title: "",
@@ -121,7 +127,7 @@ const AddProducts = () => {
 
   // 비우기
   const clearBtnClicked = () => {
-    selNum = 0;
+    setSelNum(0);
     setInput({
       ...input,
       title: "",
@@ -197,11 +203,12 @@ const AddProducts = () => {
   // 상세보기
   const detailItem = async () => {
     let count = 0;
+    let num = 0;
 
     checkRef.current.forEach((c) => {
       if (c.checked) {
         count += 1;
-        selNum = c.value;
+        num = c.value;
       }
     });
 
@@ -210,13 +217,14 @@ const AddProducts = () => {
       return;
     }
 
-    if (selNum <= 0) return;
+    if (num <= 0) return;
 
     const result = await axios.get("/detailProduct", {
-      params: { area: location.state.area, num: selNum },
+      params: { area: location.state.area, num },
     });
 
     if (result.data.length > 0) {
+      setSelNum(num);
       setInput({ ...input, title: result.data[0].d_title });
       setSaveBtn("수 정");
       setFormView(true);
@@ -273,7 +281,6 @@ const AddProducts = () => {
           </h4>
 
           {/* 입력폼 */}
-
           {formView && (
             <div className="row w-50 m-auto justify-content-center py-4 mb-5 border shadow rounded-3">
               <div className="col col-md-7 col-xl-7">
@@ -296,7 +303,11 @@ const AddProducts = () => {
                 </div>
               </div>
               <div className="col-12 col-md-7 col-xl-7">
-                <label htmlFor="coverFile" className="form-label mt-4 ms-2">
+                <label
+                  htmlFor="coverFile"
+                  className="form-label mt-4 ms-2"
+                  style={{ cursor: "pointer" }}
+                >
                   커버 이미지 선택
                 </label>
                 <input
@@ -308,7 +319,11 @@ const AddProducts = () => {
                 />
               </div>
               <div className="col-12 col-md-7 col-xl-7">
-                <label htmlFor="contentFile" className="form-label mt-3 ms-2">
+                <label
+                  htmlFor="contentFile"
+                  className="form-label mt-3 ms-2"
+                  style={{ cursor: "pointer" }}
+                >
                   내용 이미지 선택
                 </label>
                 <input
